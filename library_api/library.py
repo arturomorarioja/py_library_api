@@ -70,7 +70,8 @@ def get_books(book_id: int):
             'publishing_company': book[3],
             'publishing_year': book[4],
             'cover': cover,
-            'copies': []
+            'topics': [],
+            'loans': []
         }
 
         loans = db.execute(
@@ -78,12 +79,13 @@ def get_books(book_id: int):
             SELECT nMemberID, dLoan
             FROM tloan
             WHERE nBookID = ?
+            ORDER BY dLoan
             ''',
             (book_id,)
         ).fetchall()
 
         for loan in loans:
-            book_info['copies'].append({
+            book_info['loans'].append({
                 'user_id': loan[0],
                 'loan_date': str(loan[1])
             })
