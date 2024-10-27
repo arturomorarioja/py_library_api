@@ -66,10 +66,47 @@ def get_books(book_id: int):
         else:
             cover = result['url']
 
-        return jsonify({
+        book_info = {
             'title': book[0],
             'author': f'{book[1]} {book[2]}',
             'publishing_company': book[3],
             'publishing_year': book[4],
-            'cover': cover
-        })
+            'cover': cover,
+            'copies': []
+        }
+
+        copies = db.execute(
+            '''
+            SELECT cSignature
+            FROM tbookcopy 
+            WHERE nBookID = ?
+            ''',
+            (book_id,)
+        ).fetchall()
+
+        for copy in copies:
+            signature = copy[0]
+            book_copy = {
+                'signature': signature,
+                'loans': []
+            }
+
+            loans = db.execute(
+                '''
+                SELECT cCPR, dLoan
+                FROM tloan
+                WHERE cSignature = ?
+                ''',
+                (signature,)
+            ).fetchall()
+
+            for loan in loans:
+                book_copy['loans'].append({
+                    'cpr': loan[0],
+                    'loan_date': str(loan[1])
+                })
+
+            book_info['copies'].append(book_copy)
+            print(copy)
+
+        return jsonify(book_info)
