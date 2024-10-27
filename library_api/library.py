@@ -40,10 +40,8 @@ def get_books(book_id: int):
         SELECT tbook.cTitle, tauthor.cName, tauthor.cSurname,
             tpublishingcompany.cName, tbook.nPublishingYear
         FROM tbook
-            INNER JOIN tauthorship
-                ON tbook.nBookID = tauthorship.nBookID
             INNER JOIN tauthor
-                ON tauthorship.nAuthorID = tauthor.nAuthorID
+                ON tbook.nAuthorID = tauthor.nAuthorID
             INNER JOIN tpublishingcompany
                 ON tbook.nPublishingCompanyID = tpublishingcompany.nPublishingCompanyID
         WHERE tbook.nBookID = ?
@@ -75,38 +73,19 @@ def get_books(book_id: int):
             'copies': []
         }
 
-        copies = db.execute(
+        loans = db.execute(
             '''
-            SELECT cSignature
-            FROM tbookcopy 
+            SELECT nMemberID, dLoan
+            FROM tloan
             WHERE nBookID = ?
             ''',
             (book_id,)
         ).fetchall()
 
-        for copy in copies:
-            signature = copy[0]
-            book_copy = {
-                'signature': signature,
-                'loans': []
-            }
-
-            loans = db.execute(
-                '''
-                SELECT cCPR, dLoan
-                FROM tloan
-                WHERE cSignature = ?
-                ''',
-                (signature,)
-            ).fetchall()
-
-            for loan in loans:
-                book_copy['loans'].append({
-                    'cpr': loan[0],
-                    'loan_date': str(loan[1])
-                })
-
-            book_info['copies'].append(book_copy)
-            print(copy)
+        for loan in loans:
+            book_info['copies'].append({
+                'user_id': loan[0],
+                'loan_date': str(loan[1])
+            })
 
         return jsonify(book_info)
