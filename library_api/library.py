@@ -36,8 +36,8 @@ def basic_book_info(book_id: int):
     db = get_db()
     book = db.execute(
         '''
-        SELECT tbook.cTitle, tauthor.cName, tauthor.cSurname,
-            tpublishingcompany.cName, tbook.nPublishingYear
+        SELECT tbook.cTitle AS title, trim(tauthor.cName || ' ' || tauthor.cSurname) AS author,
+            tpublishingcompany.cName AS publishing_company, tbook.nPublishingYear AS publishing_year
         FROM tbook
             INNER JOIN tauthor
                 ON tbook.nAuthorID = tauthor.nAuthorID
@@ -54,8 +54,8 @@ def basic_book_info(book_id: int):
 
         # The book title is obtained from the book cover API
         book_cover_base_url = os.getenv('BOOK_COVER_BASE_URL')
-        book_title = convert_to_html_entities(book[0])
-        author_name = convert_to_html_entities(f'{book[1]} {book[2]}')
+        book_title = convert_to_html_entities(book['title'])
+        author_name = convert_to_html_entities(book['author'])
         book_cover_url = f'{book_cover_base_url}?book_title={book_title}&author_name={author_name}'
         result = dict(requests.get(book_cover_url).json())
         if 'error' in result:
@@ -63,13 +63,10 @@ def basic_book_info(book_id: int):
         else:
             cover = result['url']
 
-        return {
-            'title': book[0],
-            'author': f'{book[1]} {book[2]}',
-            'publishing_company': book[3],
-            'publishing_year': book[4],
-            'cover': cover
-        }
+        # The sqlite row is converted to a dictionary
+        book_info = {key: book[key] for key in book.keys()}
+        book_info['cover'] = cover
+        return book_info
 
 # Return basic book info by ID 
 @bp.route('/books/<int:book_id>', methods=['GET'])
@@ -90,7 +87,7 @@ def get_detailed_book(book_id: int):
     else:
         loans = db.execute(
             '''
-            SELECT nMemberID, dLoan
+            SELECT nMemberID AS user_id, dLoan AS loan_date
             FROM tloan
             WHERE nBookID = ?
             ORDER BY dLoan
@@ -98,12 +95,33 @@ def get_detailed_book(book_id: int):
             (book_id,)
         ).fetchall()
 
-        loan_list = []
-        for loan in loans:
-            loan_list.append({
-                'user_id': loan[0],
-                'loan_date': str(loan[1])
-            })
+        # The loan date is converted to a string, but the user ID is not
+        loan_list = [{key: str(loan[key]) if key == 'loan_date' else loan[key] \
+            for key in loan.keys()} for loan in loans]
         book_info['loans'] = loan_list
-
         return jsonify(book_info), 200
+    
+# Return random book info
+@bp.route('/books', methods=['GET'])
+def get_random_books():
+    number = request.args.get('n')
+    if number == None:
+        return error_message()
+    else:
+        db = get_db()
+        books = db.execute(
+            '''
+            SELECT tbook.nBookID AS book_id, tbook.cTitle AS title, tbook.nPublishingYear AS publishing_year,
+                trim(tauthor.cName || ' ' || tauthor.cSurname) AS author, tpublishingcompany.cName AS publishing_company
+            FROM tbook INNER JOIN tauthor
+                    ON tbook.nAuthorID = tauthor.nAuthorID
+                INNER JOIN tpublishingcompany
+                    ON tbook.nPublishingCompanyID = tpublishingcompany.nPublishingCompanyID
+            ORDER BY RANDOM()
+            LIMIT ?
+            ''',
+            (number,)
+        ).fetchall()
+
+        book_list = [{key: book[key] for key in book.keys()} for book in books]
+        return jsonify(book_list), 200
