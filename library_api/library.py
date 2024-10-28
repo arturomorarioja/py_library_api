@@ -49,7 +49,7 @@ def basic_book_info(book_id: int):
     ).fetchone()
     
     if book == None:
-        return error_message('Book not found')
+        return error_message('Book not found'), 404
     else:        
 
         # The book title is obtained from the book cover API
@@ -125,3 +125,26 @@ def get_random_books():
 
         book_list = [{key: book[key] for key in book.keys()} for book in books]
         return jsonify(book_list), 200
+    
+# Return user information
+@bp.route('/users/<int:user_id>', methods=['GET'])
+def get_user(user_id: int):
+    db = get_db()
+    user = db.execute(
+        '''
+        SELECT cEmail AS email, cName AS first_name, cSurname AS last_name, 
+            cAddress AS address, cPhoneNo AS phone_number, 
+            dBirth AS birth_date, dNewMember AS membership_date
+        FROM tmember
+        WHERE nMemberID = ?
+        ''',
+        (user_id,)
+    ).fetchone()
+
+    if user == None:
+        return error_message('User not found'), 404
+    else:        
+        user_info = {key: user[key] for key in user.keys()}
+        user_info['birth_date'] = str(user_info['birth_date'])
+        user_info['membership_date'] = str(user_info['membership_date'])
+        return jsonify(user_info), 200
