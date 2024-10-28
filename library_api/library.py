@@ -1,6 +1,8 @@
 import os
+import re
 import requests
 import html.entities
+from datetime import date
 from flask import Blueprint, request, jsonify
 from library_api.database import get_db
 
@@ -148,3 +150,53 @@ def get_user(user_id: int):
         user_info['birth_date'] = str(user_info['birth_date'])
         user_info['membership_date'] = str(user_info['membership_date'])
         return jsonify(user_info), 200
+
+# Add new user
+@bp.route('/users', methods=['POST'])
+def post_user():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    address = request.form.get('address')
+    phone_number = request.form.get('phone_number')
+    birth_date = request.form.get('birth_date')
+
+    # All values are mandatory
+    if not (email and password and first_name and last_name and address and phone_number and birth_date):
+        return error_message(), 400
+    else:
+        # The password must be at least 8 characters long and include at least 
+        # one uppercase and lowercase letter, one number and one special character.
+        # RegEx pattern from https://uibakery.io/regex-library/password-regex-python
+        if re.match('^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$', password) == None:
+            return error_message('Incorrect password format'), 400
+        else:
+            # The email address must not exist in the database
+            db = get_db()
+            user = db.execute(
+                '''
+                SELECT COUNT(*) AS total
+                FROM tmember
+                WHERE cEmail = ?
+                ''',
+                (email,)
+            ).fetchone()
+            if user['total'] > 0:
+                return error_message('The user already exists'), 400
+            else:
+                cursor = db.cursor()
+                cursor.execute(
+                    '''
+                    INSERT INTO tmember
+                        (cEmail, cPassword, cName, cSurname, cAddress, cPhoneNo, dBirth, dNewMember)
+                    VALUES
+                        (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''',
+                    (email, password, first_name, last_name, address, phone_number, birth_date, str(date.today()))
+                )
+                user_id = cursor.lastrowid
+                cursor.close()
+                db.commit()
+
+                return jsonify({'user_id': user_id}), 201
