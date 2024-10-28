@@ -31,9 +31,8 @@ def convert_to_html_entities(text: str):
 
 bp = Blueprint('library_api', __name__)
 
-# Return book info by ID 
-@bp.route('/books/<int:book_id>', methods=['GET'])
-def get_books(book_id: int):
+# Returns a dictionary with basic book info by ID
+def basic_book_info(book_id: int):
     db = get_db()
     book = db.execute(
         '''
@@ -64,16 +63,31 @@ def get_books(book_id: int):
         else:
             cover = result['url']
 
-        book_info = {
+        return {
             'title': book[0],
             'author': f'{book[1]} {book[2]}',
             'publishing_company': book[3],
             'publishing_year': book[4],
-            'cover': cover,
-            'topics': [],
-            'loans': []
+            'cover': cover
         }
 
+# Return basic book info by ID 
+@bp.route('/books/<int:book_id>', methods=['GET'])
+def get_book(book_id: int):
+    book_info = basic_book_info(book_id)
+    if 'error' in book_info:
+        return book_info, 404
+    else:
+        return jsonify(book_info), 200
+
+# Return detailed book info by ID 
+@bp.route('/admin/books/<int:book_id>', methods=['GET'])
+def get_detailed_book(book_id: int):
+    db = get_db()
+    book_info = basic_book_info(book_id)
+    if 'error' in book_info:
+        return book_info, 404
+    else:
         loans = db.execute(
             '''
             SELECT nMemberID, dLoan
@@ -84,10 +98,12 @@ def get_books(book_id: int):
             (book_id,)
         ).fetchall()
 
+        loan_list = []
         for loan in loans:
-            book_info['loans'].append({
+            loan_list.append({
                 'user_id': loan[0],
                 'loan_date': str(loan[1])
             })
+        book_info['loans'] = loan_list
 
-        return jsonify(book_info)
+        return jsonify(book_info), 200
