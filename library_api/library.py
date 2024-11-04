@@ -78,7 +78,7 @@ def get_detailed_book(book_id: int):
         book_info['loans'] = loan_list
         return jsonify(book_info), 200
     
-# Return random book info
+# Return information for a random number of books
 @bp.route('/books', methods=['GET'])
 def get_random_books():
     number = request.args.get('n')
@@ -103,7 +103,7 @@ def get_random_books():
         book_list = [{key: book[key] for key in book.keys()} for book in books]
         return jsonify(book_list), 200
     
-# Return user information
+# Return information for a specific user
 @bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id: int):
     db = get_db()
@@ -175,3 +175,27 @@ def post_user():
                 db.commit()
 
                 return jsonify({'user_id': user_id}), 201
+
+# Validate login information
+@bp.route('/users/login', methods=['POST'])
+def validate_user():
+    email = request.form.get('email')
+    password = request.form.get('password')
+
+    if not (email and password):
+        return error_message(), 400
+    else:
+        db = get_db()
+        user = db.execute(
+            '''
+            SELECT nMemberID AS user_id
+            FROM tmember
+            WHERE cEmail = ?
+            AND cPassword = ?
+            ''',
+            (email, password)
+        ).fetchone()
+        if user == None:
+            return error_message('Wrong credentials'), 401
+        else:
+            return jsonify({'user_id': user['user_id']})
