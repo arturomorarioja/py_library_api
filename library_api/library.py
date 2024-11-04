@@ -199,3 +199,23 @@ def validate_user():
             return error_message('Wrong credentials'), 401
         else:
             return jsonify({'user_id': user['user_id']})
+        
+# Delete a specific user
+@bp.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id: int):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        '''
+        DELETE FROM tmember
+        WHERE nMemberID = ?
+        ''',
+        (user_id,)
+    )
+    deleted_rows = cursor.rowcount
+    db.commit()
+    cursor.close()
+    if deleted_rows == 0:
+        return error_message('The user could not be deleted'), 500
+    else:
+        return jsonify({'status': 'ok'}), 200
