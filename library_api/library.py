@@ -207,6 +207,14 @@ def delete_user(user_id: int):
     cursor = db.cursor()
     cursor.execute(
         '''
+        DELETE FROM tloan
+        WHERE nMemberID = ?
+        ''',
+        (user_id,)
+    )
+
+    cursor.execute(
+        '''
         DELETE FROM tmember
         WHERE nMemberID = ?
         ''',
