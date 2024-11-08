@@ -219,3 +219,35 @@ def delete_user(user_id: int):
         return error_message('The user could not be deleted'), 500
     else:
         return jsonify({'status': 'ok'}), 200
+
+# Update a specific user
+@bp.route('/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id: int):
+    fields = {
+        'cEmail': request.form.get('email'),
+        'cName': request.form.get('first_name'),
+        'cSurname': request.form.get('last_name'),
+        'cAddress': request.form.get('address'),
+        'cPhoneNo': request.form.get('phone_number'),
+        'dBirth': request.form.get('birth_date')
+    }
+    fields = { key: value for key, value in fields.items() if value is not None }
+
+    if not fields:
+        return error_message(), 400
+    else:
+        sql = 'UPDATE tmember SET ' + ', '.join([f'{key} = ?' for key in fields.keys()]) + ' WHERE nMemberID = ?'
+
+        print(sql)
+        print(list(fields.values()) + [user_id])
+
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(sql, list(fields.values()) + [user_id])
+        updated_rows = cursor.rowcount
+        db.commit()
+        cursor.close()
+        if updated_rows == 0:
+            return error_message('The user could not be updated'), 500
+        else:
+            return jsonify({'status': 'ok'}), 200
