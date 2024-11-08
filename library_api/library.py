@@ -1,7 +1,7 @@
 import os
 import re
 import requests
-from datetime import date
+from datetime import date, timedelta
 from flask import Blueprint, request, jsonify
 from library_api.database import get_db
 from library_api.common import error_message, convert_to_html_entities
@@ -251,3 +251,45 @@ def update_user(user_id: int):
             return error_message('The user could not be updated'), 500
         else:
             return jsonify({'status': 'ok'}), 200
+        
+# Loan a book
+@bp.route('/users/<int:user_id>/books/<int:book_id>', methods=['POST'])
+def loan_book(user_id: int, book_id: int):  
+    
+    # Check that the book is not already on loan by this user
+    db = get_db()
+    loan = db.execute(
+        '''
+        SELECT MAX(dLoan) AS last_loan_date
+        FROM tloan
+        WHERE nBookID = ?
+        AND nMemberID = ?
+        ''',
+        (book_id, user_id)
+    ).fetchone()
+
+    today = date.today()
+    if loan is not None:
+        last_loan_date = loan['last_loan_date']
+        if last_loan_date is not None:
+            if loan['last_loan_date'] >= str(today - timedelta(days = 30)):
+                return error_message('This user has still this book on loan'), 400
+    
+    # Loan the book
+    cursor = db.cursor()
+    cursor.execute(
+        '''
+        INSERT INTO tloan
+            (nBookID, nMemberID, dLoan)
+        VALUES
+            (?, ?, ?)
+        ''',
+        (book_id, user_id, today)
+    )
+    inserted_rows = cursor.rowcount
+    db.commit()
+    cursor.close()
+    if inserted_rows == 0:
+        return error_message('It was not possible to loan the book'), 500
+    else:
+        return jsonify({'status': 'ok'})
