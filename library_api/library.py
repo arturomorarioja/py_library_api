@@ -168,7 +168,7 @@ def get_authors():
     db = get_db()
     authors = db.execute(
         '''
-        SELECT trim(cName || ' ' || cSurname) AS author
+        SELECT nAuthorID AS author_id, trim(cName || ' ' || cSurname) AS author_name
         FROM tauthor
         ORDER BY cSurname, cName
         '''
@@ -180,6 +180,19 @@ def get_authors():
 # Add new author
 
 # Return all publishing companies
+@bp.route('/publishers', methods=['GET'])
+def get_publishers():
+    db = get_db()
+    publishers = db.execute(
+        '''
+        SELECT nPublishingCompanyID AS publisher_id, cName AS publisher_name
+        FROM tpublishingcompany
+        ORDER BY cName
+        '''
+    ).fetchall()
+
+    publisher_list = [{key: publisher[key] for key in publisher.keys()} for publisher in publishers]
+    return jsonify(publisher_list), 200
 
 # Add new publishing company
     
