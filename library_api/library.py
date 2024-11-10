@@ -104,7 +104,7 @@ def get_random_books():
         return jsonify(book_list), 200
     
 # Add new book
-@bp.route('/books', methods=['POST'])
+@bp.route('/admin/books', methods=['POST'])
 def post_book():
     title = request.form.get('title')
     author_id = request.form.get('author_id')
@@ -127,7 +127,7 @@ def post_book():
         if author['Total'] == 0:
             return error_message('The author does not exist'), 404
         else:
-            if publishing_year >= date.today().year:
+            if publishing_year > date.today().year:
                 return error_message('Invalid year of publication'), 400
             else:
                 publisher = db.execute(

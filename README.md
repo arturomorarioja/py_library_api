@@ -9,6 +9,8 @@ POST parameters are sent as form-data.
 |------|--------|-----------|-----------|
 |GET|/books?n=<number_of_books>||Retrieve a random number of books|
 |GET|/books/<book_id>||Retrieve information about a book|
+|GET|/authors||Retrieve all authors|
+|GET|/publishers||Retrieve all publishers|
 |GET|/users/<user_id>||Retrieve information about a user|
 |POST|/users|email, password, first_name, last_name, address, phone_number, birth_date|Create a new user. All parameters are mandatory. Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number and one special character|
 |PUT|/users/<user_id>|email (optional), first_name (optional), last_name (optional), address (optional), phone_number (optional), birth_date (optional)|Update information about a user. At least one parameter must have a value|
@@ -20,6 +22,7 @@ POST parameters are sent as form-data.
 |Method|Endpoint|POST params|Description|
 |------|--------|-----------|-----------|
 |GET|/admin/books/<book_id>||Retrieve information about a book and its loan history|
+|POST|/admin/books|title, author_id, publisher_id, publishing_year|Create a new book. All parameters are mandatory. Year must be higher than the present year|
 
 <b>Return values</b>:
 
@@ -52,6 +55,34 @@ POST parameters are sent as form-data.
     "publishing_year": 2010,
     "cover": "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1507838927i/36402034.jpg"
 }
+```
+- GET /authors
+```json
+[
+    {
+        "author_id": 1,
+        "author_name": "Aeschylus"
+    },
+    {
+        "author_id": 3,
+        "author_name": "Aristotle"
+    },
+    ...
+]
+```
+- GET /publishers
+```json
+[
+    {
+        "publisher_id": 98,
+        "publisher_name": "Adams Group"
+    },
+    {
+        "publisher_id": 135,
+        "publisher_name": "Armstrong Inc"
+    },
+    ...
+]
 ```
 - GET /users/13
 ```json
@@ -144,6 +175,27 @@ POST parameters are sent as form-data.
         },
         ...
     ]
+}
+```
+- POST /admin/books
+```json
+{
+    "book_id": 1999
+}
+```
+```json
+{
+    "error": "Incorrect parameters"
+}
+```
+```json
+{
+    "error": "The author does not exist"
+}
+```
+```json
+{
+    "error": "The publishing company does not exist"
 }
 ```
 
