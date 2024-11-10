@@ -163,6 +163,19 @@ def post_book():
                         return jsonify({'book_id': book_id}), 201
 
 # Return all authors
+@bp.route('/authors', methods=['GET'])
+def get_authors():
+    db = get_db()
+    authors = db.execute(
+        '''
+        SELECT trim(cName || ' ' || cSurname) AS author
+        FROM tauthor
+        ORDER BY cSurname, cName
+        '''
+    ).fetchall()
+
+    author_list = [{key: author[key] for key in author.keys()} for author in authors]
+    return jsonify(author_list), 200
 
 # Add new author
 
