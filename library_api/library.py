@@ -103,6 +103,73 @@ def get_random_books():
         book_list = [{key: book[key] for key in book.keys()} for book in books]
         return jsonify(book_list), 200
     
+# Add new book
+@bp.route('/books', methods=['POST'])
+def post_book():
+    title = request.form.get('title')
+    author_id = request.form.get('author_id')
+    publisher_id = request.form.get('publisher_id')
+    publishing_year = int(request.form.get('publishing_year'))
+
+    if not (title and author_id and publisher_id and publishing_year):
+        return error_message(), 400
+    else:
+        db = get_db()
+        author = db.execute(
+            '''
+            SELECT COUNT(*) AS Total
+            FROM tauthor
+            WHERE nAuthorID = ?
+            ''',
+            (author_id,)
+        ).fetchone()
+
+        if author['Total'] == 0:
+            return error_message('The author does not exist'), 404
+        else:
+            if publishing_year >= date.today().year:
+                return error_message('Invalid year of publication'), 400
+            else:
+                publisher = db.execute(
+                    '''
+                    SELECT COUNT(*) AS Total
+                    FROM tpublishingcompany
+                    WHERE nPublishingCompanyID = ?
+                    ''',
+                    (publisher_id,)
+                ).fetchone()
+
+                if publisher['Total'] == 0:
+                    return error_message('The publishing company does not exist'), 404
+                else:
+                    cursor = db.cursor()
+                    cursor.execute(
+                        '''
+                        INSERT INTO tbook
+                            (cTitle, nAuthorID, nPublishingYear, nPublishingCompanyID)
+                        VALUES
+                            (?, ?, ?, ?)
+                        ''',
+                        (title, author_id, publishing_year, publisher_id)
+                    )
+                    book_id = cursor.lastrowid
+                    inserted_rows = cursor.rowcount
+                    db.commit()
+                    cursor.close()
+
+                    if inserted_rows == 0:
+                        return error_message('There was an error when trying to insert the book'), 500
+                    else:
+                        return jsonify({'book_id': book_id}), 201
+
+# Return all authors
+
+# Add new author
+
+# Return all publishing companies
+
+# Add new publishing company
+    
 # Return information for a specific user
 @bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id: int):
