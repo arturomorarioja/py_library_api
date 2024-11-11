@@ -8,6 +8,7 @@ POST parameters are sent as form-data.
 |Method|Endpoint|POST params|Description|
 |------|--------|-----------|-----------|
 |GET|/books?n=<number_of_books>||Retrieve a random number of books|
+|GET|/books?s=<search_text>||Retrieve the books whose title includes a search term|
 |GET|/books/<book_id>||Retrieve information about a book|
 |GET|/authors||Retrieve all authors|
 |GET|/publishers||Retrieve all publishers|
@@ -44,6 +45,26 @@ POST parameters are sent as form-data.
         "publishing_year": 1982,
         "author": "Edgar Allan Poe",
         "publishing_company": "Fisher LLC"
+    },
+    ...
+]
+```
+- GET /books?s=winter
+```json
+[
+    {
+        "book_id": 1458,
+        "title": "If on a Winter's Night a Traveler",
+        "publishing_year": 1967,
+        "author": "Italo Calvino",
+        "publishing_company": "Treutel, Schuster and Brekke"
+    },
+    {
+        "book_id": 1898,
+        "title": "The Long Winter",
+        "publishing_year": 1959,
+        "author": "Laura Ingalls Wilder",
+        "publishing_company": "Stoltenberg and Sons"
     },
     ...
 ]

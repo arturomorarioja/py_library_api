@@ -78,27 +78,38 @@ def get_detailed_book(book_id: int):
         book_info['loans'] = loan_list
         return jsonify(book_info), 200
     
-# Return information for a random number of books
+# Return information for a random number of books,
+# or search for books whose title contains a specific text
 @bp.route('/books', methods=['GET'])
 def get_random_books():
     number = request.args.get('n')
-    if number == None:
+    search_text = request.args.get('s')
+    if not (number or search_text):
         return error_message()
     else:
         db = get_db()
-        books = db.execute(
-            '''
+        sql = '''
             SELECT tbook.nBookID AS book_id, tbook.cTitle AS title, tbook.nPublishingYear AS publishing_year,
                 trim(tauthor.cName || ' ' || tauthor.cSurname) AS author, tpublishingcompany.cName AS publishing_company
             FROM tbook INNER JOIN tauthor
                     ON tbook.nAuthorID = tauthor.nAuthorID
                 INNER JOIN tpublishingcompany
                     ON tbook.nPublishingCompanyID = tpublishingcompany.nPublishingCompanyID
-            ORDER BY RANDOM()
-            LIMIT ?
-            ''',
-            (number,)
-        ).fetchall()
+        '''
+        # Random books retrieval
+        if number is not None:
+            sql += '''
+                ORDER BY RANDOM()
+                LIMIT ?
+            '''
+            books = db.execute(sql, (number,)).fetchall()
+        # Book search
+        else:
+            sql += '''
+                WHERE tbook.cTitle LIKE ?
+                ORDER BY tbook.cTitle
+            '''
+            books = db.execute(sql, (f'%{search_text}%',)).fetchall()
 
         book_list = [{key: book[key] for key in book.keys()} for book in books]
         return jsonify(book_list), 200
