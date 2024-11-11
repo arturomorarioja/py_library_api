@@ -235,7 +235,46 @@ def get_publishers():
     return jsonify(publisher_list), 200
 
 # Add new publishing company
-    
+@bp.route('/admin/publishers', methods=['POST'])
+def post_publisher():
+    name = request.form.get('name').strip()
+
+    if not name:
+        return error_message(), 400
+    else:
+        db = get_db()
+        publisher = db.execute(
+            '''
+            SELECT COUNT(*) AS Total
+            FROM tpublishingcompany
+            WHERE cName = ?
+            ''',
+            (name,)
+        ).fetchone()
+
+        if publisher['Total'] > 0:
+            return error_message('The publisher already exists'), 400
+        else:            
+            cursor = db.cursor()
+            cursor.execute(
+                '''
+                INSERT INTO tpublishingcompany
+                    (cName)
+                VALUES
+                    (?)
+                ''',
+                (name,)
+            )
+            publisher_id = cursor.lastrowid
+            inserted_rows = cursor.rowcount
+            db.commit()
+            cursor.close()
+
+            if inserted_rows == 0:
+                return error_message('There was an error while trying to insert the publisher'), 500
+            else:
+                return jsonify({'publisher_id': publisher_id}), 201
+                
 # Return information for a specific user
 @bp.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id: int):

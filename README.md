@@ -24,6 +24,7 @@ POST parameters are sent as form-data.
 |GET|/admin/books/<book_id>||Retrieve information about a book and its loan history|
 |POST|/admin/books|title, author_id, publisher_id, publishing_year|Create a new book. All parameters are mandatory. Year must be higher than the present year|
 |POST|/admin/authors|first_name, last_name|Create a new author. All parameters are mandatory|
+|POST|/admin/publishers|name|Create a new publisher. The parameter is mandatory|
 
 <b>Return values</b>:
 
@@ -213,6 +214,22 @@ POST parameters are sent as form-data.
 ```json
 {
     "error": "The author already exists"
+}
+```
+- POST /admin/publishers
+```json
+{
+    "publisher_id": 158
+}
+```
+```json
+{
+    "error": "Incorrect parameters"
+}
+```
+```json
+{
+    "error": "The publisher already exists"
 }
 ```
 
