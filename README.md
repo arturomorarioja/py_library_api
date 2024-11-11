@@ -275,8 +275,15 @@ POST parameters are sent as form-data.
 }
 ```
 
-## Installation
-Rename `librarylite_original.db` as `librarylite.db`.
+## Installation and execution
+1. copy `data/librarylite_original.db` to `data/librarylite.db`.
+2. Start Docker Desktop
+3. In the command line, run `docker-compose up -d`. The API will be available at `http://localhost:8080`.
+
+The API will be available at `http://localhost:8080`.
+
+## Data reset
+In case a data reset is necessary, the original database is at `data/librarylite_original.db`. It can be copied to `data/librarylite.db`.
 
 ## Tools
 SQLite3 / Flask / Python

@@ -8,7 +8,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
-from library_api import library, database
+import library, database
 
 load_dotenv()
 
@@ -27,3 +27,6 @@ def create_app():
     print(f'Using database: {app.config.get("DATABASE")}')
 
     return app
+
+if __name__ == "__main__":
+    create_app().run(host='0.0.0.0', port=os.getenv("PORT"))

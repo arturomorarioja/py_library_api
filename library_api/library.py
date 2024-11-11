@@ -3,8 +3,8 @@ import re
 import requests
 from datetime import date, timedelta
 from flask import Blueprint, request, jsonify
-from library_api.database import get_db
-from library_api.common import error_message, convert_to_html_entities
+from database import get_db
+from common import error_message, convert_to_html_entities
 
 bp = Blueprint('library_api', __name__)
 
