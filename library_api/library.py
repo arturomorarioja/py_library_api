@@ -79,12 +79,14 @@ def get_detailed_book(book_id: int):
         return jsonify(book_info), 200
     
 # Return information for a random number of books,
-# or search for books whose title contains a specific text
+# or search for books whose title contains a specific text,
+# or search for books by a specific author
 @bp.route('/books', methods=['GET'])
 def get_random_books():
     number = request.args.get('n')
     search_text = request.args.get('s')
-    if not (number or search_text):
+    author_id = request.args.get('a')
+    if not (number or search_text or author_id):
         return error_message()
     else:
         db = get_db()
@@ -104,12 +106,19 @@ def get_random_books():
             '''
             books = db.execute(sql, (number,)).fetchall()
         # Book search
-        else:
+        elif search_text is not None:
             sql += '''
                 WHERE tbook.cTitle LIKE ?
                 ORDER BY tbook.cTitle
             '''
             books = db.execute(sql, (f'%{search_text}%',)).fetchall()
+        # Retrieval of books by author
+        else:
+            sql += '''
+                WHERE tbook.nAuthorID = ?
+                ORDER BY tbook.cTitle
+            '''
+            books = db.execute(sql, (author_id,)).fetchall()
 
         book_list = [{key: book[key] for key in book.keys()} for book in books]
         return jsonify(book_list), 200

@@ -9,6 +9,7 @@ POST parameters are sent as form-data.
 |------|--------|-----------|-----------|
 |GET|/books?n=<number_of_books>||Retrieve a random number of books|
 |GET|/books?s=<search_text>||Retrieve the books whose title includes a search term|
+|GET|/books/a=<author_id>||Retrieve the books written by a specific author|
 |GET|/books/<book_id>||Retrieve information about a book|
 |GET|/authors||Retrieve all authors|
 |GET|/publishers||Retrieve all publishers|
@@ -65,6 +66,26 @@ POST parameters are sent as form-data.
         "publishing_year": 1959,
         "author": "Laura Ingalls Wilder",
         "publishing_company": "Stoltenberg and Sons"
+    },
+    ...
+]
+```
+- GET /books?a=32
+```json
+[
+    {
+        "book_id": 1499,
+        "title": "Alias Grace",
+        "publishing_year": 1972,
+        "author": "Margaret Atwood",
+        "publishing_company": "Gislason-Parker"
+    },
+    {
+        "book_id": 1701,
+        "title": "Cat's Eye",
+        "publishing_year": 1974,
+        "author": "Margaret Atwood",
+        "publishing_company": "Tromp, Johnson and Barrows"
     },
     ...
 ]
