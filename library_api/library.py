@@ -178,6 +178,46 @@ def get_authors():
     return jsonify(author_list), 200
 
 # Add new author
+@bp.route('/admin/authors', methods=['POST'])
+def post_author():
+    first_name = request.form.get('first_name').strip()
+    last_name = request.form.get('last_name').strip()
+
+    if not (first_name and last_name):
+        return error_message(), 400
+    else:
+        db = get_db()
+        author = db.execute(
+            '''
+            SELECT COUNT(*) AS Total
+            FROM tauthor
+            WHERE cName = ? AND cSurname = ?
+            ''',
+            (first_name, last_name)
+        ).fetchone()
+
+        if author['Total'] > 0:
+            return error_message('The author already exists'), 400
+        else:            
+            cursor = db.cursor()
+            cursor.execute(
+                '''
+                INSERT INTO tauthor
+                    (cName, cSurname)
+                VALUES
+                    (?, ?)
+                ''',
+                (first_name, last_name)
+            )
+            author_id = cursor.lastrowid
+            inserted_rows = cursor.rowcount
+            db.commit()
+            cursor.close()
+
+            if inserted_rows == 0:
+                return error_message('There was an error while trying to insert the author'), 500
+            else:
+                return jsonify({'author_id': author_id}), 201
 
 # Return all publishing companies
 @bp.route('/publishers', methods=['GET'])
